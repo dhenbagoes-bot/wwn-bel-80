@@ -145,3 +145,10 @@ export interface FullBackupData {
   pengguna: PenggunaItem[];
   riwayat?: RiwayatBelItem[];
 }
+
+export interface SchoolEntry {
+  id: string;
+  nama: string;
+  apiUrl: string;
+  kota?: string;
+}

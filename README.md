@@ -94,6 +94,37 @@ npm run dev
 
 ---
 
+## 🏫 Mode Multi-Sekolah (Satu Alamat untuk Banyak Sekolah)
+
+Aplikasi mendukung banyak sekolah/madrasah dalam satu alamat deployment melalui file **`public/schools.json`**. Saat dibuka, pengunjung memilih sekolah dari daftar, dan aplikasi otomatis tersambung ke backend (Google Spreadsheet + Apps Script) masing-masing sekolah. Data tiap sekolah tetap terpisah.
+
+Format `public/schools.json`:
+
+```json
+[
+  {
+    "id": "mts-alislam-ngleses",
+    "nama": "MTs Al Islam Ngleses",
+    "kota": "Juwangi, Boyolali",
+    "apiUrl": "https://script.google.com/macros/s/XXXX/exec"
+  },
+  {
+    "id": "sdn-01-nusantara",
+    "nama": "SDN 01 Nusantara",
+    "apiUrl": "https://script.google.com/macros/s/YYYY/exec"
+  }
+]
+```
+
+* `id`: unik, huruf kecil tanpa spasi (dipakai sebagai penanda).
+* `nama`: nama sekolah yang tampil di daftar pilih.
+* `kota`: opsional, tampil sebagai keterangan.
+* `apiUrl`: URL Web App (`/exec`) milik sekolah tersebut.
+
+**Menambah sekolah baru:** edit `public/schools.json`, commit, push — Vercel otomatis deploy ulang. Prioritas koneksi: parameter URL `?api=` → sekolah yang terakhir dipilih (tersimpan di browser) → daftar pilih sekolah → konfigurasi manual.
+
+---
+
 ## 🛡️ Akun Bawaan Sistem (Sheet: `Pengguna`)
 
 * **Administrator Utama:**

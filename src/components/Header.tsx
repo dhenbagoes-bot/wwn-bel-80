@@ -47,6 +47,8 @@ interface HeaderProps {
   authSession: AuthSession;
   onOpenLogin: () => void;
   onLogout: () => void;
+  onOpenSchoolPicker?: () => void;
+  hasSchools?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -68,7 +70,9 @@ export const Header: React.FC<HeaderProps> = ({
   onActivateAudio,
   authSession,
   onOpenLogin,
-  onLogout
+  onLogout,
+  onOpenSchoolPicker,
+  hasSchools
 }) => {
   const { themeClasses, isLight } = useTheme();
 
@@ -257,6 +261,20 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Login</span>
+              </button>
+            )}
+
+            {/* School Picker Button (multi-sekolah) */}
+            {hasSchools && onOpenSchoolPicker && (
+              <button
+                onClick={onOpenSchoolPicker}
+                title="Ganti Sekolah / Madrasah"
+                className={`p-2 sm:px-3 sm:py-2 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                  isLight ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800' : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200'
+                }`}
+              >
+                <School className="w-4 h-4 text-cyan-400" />
+                <span className="hidden lg:inline">Sekolah</span>
               </button>
             )}
 

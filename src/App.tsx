@@ -27,6 +27,7 @@ import { BellRingingPopup } from './components/BellRingingPopup';
 import { ConfigModal } from './components/ConfigModal';
 import { ScriptGuideModal } from './components/ScriptGuideModal';
 import { LoginModal } from './components/LoginModal';
+import { SchoolPickerModal } from './components/SchoolPickerModal';
 import { ToastContainer, ToastMessage } from './components/Toast';
 import {
   SchoolConfig,
@@ -40,7 +41,8 @@ import {
   ActiveAppView,
   AuthSession,
   ActiveRingingBell,
-  FullBackupData
+  FullBackupData,
+  SchoolEntry
 } from './types';
 import {
   DEFAULT_SCHOOL_CONFIG,
@@ -127,6 +129,89 @@ function AppContent() {
   const [hariLiburList, setHariLiburList] = useState<HariLiburItem[]>(DEFAULT_HARI_LIBUR);
   const [riwayatList, setRiwayatList] = useState<RiwayatBelItem[]>([]);
   const [usersList, setUsersList] = useState<PenggunaItem[]>(DEFAULT_USERS);
+
+  // Multi-sekolah: daftar sekolah dari public/schools.json (satu alamat untuk banyak sekolah)
+  const [schoolList, setSchoolList] = useState<SchoolEntry[]>([]);
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
+  const [isSchoolPickerOpen, setIsSchoolPickerOpen] = useState(false);
+  const SCHOOL_STORAGE_KEY = 'wwn-bel-80:school-id';
+
+  const readStoredSchoolId = (): string | null => {
+    try {
+      return window.localStorage.getItem(SCHOOL_STORAGE_KEY);
+    } catch {
+      return null;
+    }
+  };
+
+  const writeStoredSchoolId = (id: string | null) => {
+    try {
+      if (id) window.localStorage.setItem(SCHOOL_STORAGE_KEY, id);
+      else window.localStorage.removeItem(SCHOOL_STORAGE_KEY);
+    } catch {
+      /* abaikan jika penyimpanan tidak tersedia */
+    }
+  };
+
+  const applySchoolSelection = (school: SchoolEntry, silent: boolean = false) => {
+    setSelectedSchoolId(school.id);
+    writeStoredSchoolId(school.id);
+    setApiUrl(school.apiUrl);
+    if (typeof window !== 'undefined' && window.history) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('api', school.apiUrl);
+      window.history.replaceState({}, '', url.toString());
+    }
+    if (!silent) {
+      addToast('success', 'Sekolah Terhubung', `${school.nama} berhasil dihubungkan.`);
+    }
+  };
+
+  const handleSelectSchool = (school: SchoolEntry) => {
+    setIsSchoolPickerOpen(false);
+    applySchoolSelection(school);
+  };
+
+  // Muat daftar sekolah saat aplikasi dibuka
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('schools.json', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled || !Array.isArray(data) || data.length === 0) return;
+        const valid: SchoolEntry[] = data.filter(
+          (s: any) => s && typeof s.id === 'string' && typeof s.nama === 'string' && typeof s.apiUrl === 'string' && s.apiUrl.startsWith('http')
+        );
+        if (valid.length === 0) return;
+        setSchoolList(valid);
+
+        // Prioritas: parameter ?api= > sekolah tersimpan > tampilkan pilihan
+        const params = new URLSearchParams(window.location.search);
+        const urlParam = params.get('api') || params.get('gas');
+        if (urlParam) {
+          const matched = valid.find(s => s.apiUrl === decodeURIComponent(urlParam));
+          if (matched) {
+            setSelectedSchoolId(matched.id);
+            writeStoredSchoolId(matched.id);
+          }
+          return;
+        }
+        const storedId = readStoredSchoolId();
+        const stored = storedId ? valid.find(s => s.id === storedId) : undefined;
+        if (stored) {
+          applySchoolSelection(stored, true);
+        } else {
+          setIsSchoolPickerOpen(true);
+        }
+      } catch {
+        /* schools.json tidak ada / tidak valid -> mode konfigurasi manual seperti biasa */
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   
   // Authentication State
   const [authSession, setAuthSession] = useState<AuthSession>({
@@ -496,6 +581,14 @@ function AppContent() {
       return;
     }
     setApiUrl(cleanUrl);
+    const matched = schoolList.find(s => s.apiUrl === cleanUrl);
+    if (matched) {
+      setSelectedSchoolId(matched.id);
+      writeStoredSchoolId(matched.id);
+    } else {
+      setSelectedSchoolId(null);
+      writeStoredSchoolId(null);
+    }
     if (typeof window !== 'undefined' && window.history) {
       const url = new URL(window.location.href);
       url.searchParams.set('api', cleanUrl);
@@ -542,6 +635,15 @@ function AppContent() {
           if (newApiUrl) url.searchParams.set('api', newApiUrl);
           else url.searchParams.delete('api');
           window.history.replaceState({}, '', url.toString());
+        }
+        // Jika URL manual tidak cocok dengan sekolah terpilih, lepas pilihan sekolah
+        const matched = schoolList.find(s => s.apiUrl === newApiUrl.trim());
+        if (matched) {
+          setSelectedSchoolId(matched.id);
+          writeStoredSchoolId(matched.id);
+        } else {
+          setSelectedSchoolId(null);
+          writeStoredSchoolId(null);
         }
       }
 
@@ -940,6 +1042,8 @@ function AppContent() {
           authSession={authSession}
           onOpenLogin={() => setIsLoginModalOpen(true)}
           onLogout={handleLogout}
+          onOpenSchoolPicker={() => setIsSchoolPickerOpen(true)}
+          hasSchools={schoolList.length > 0}
         />
 
         {/* Main Content Body */}
@@ -1328,6 +1432,15 @@ function AppContent() {
         usersList={usersList}
         onLoginSuccess={handleLoginSuccess}
         authSession={authSession}
+      />
+
+      {/* School Picker Modal (multi-sekolah, satu alamat) */}
+      <SchoolPickerModal
+        isOpen={isSchoolPickerOpen}
+        schools={schoolList}
+        selectedId={selectedSchoolId}
+        onSelect={handleSelectSchool}
+        onClose={() => setIsSchoolPickerOpen(false)}
       />
 
       {/* Notification Toasts */}
