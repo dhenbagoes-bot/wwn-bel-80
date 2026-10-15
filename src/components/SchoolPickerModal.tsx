@@ -21,8 +21,6 @@ export const SchoolPickerModal: React.FC<SchoolPickerModalProps> = ({
   const { isLight } = useTheme();
   const [query, setQuery] = useState('');
 
-  if (!isOpen) return null;
-
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return schools;
@@ -31,6 +29,9 @@ export const SchoolPickerModal: React.FC<SchoolPickerModalProps> = ({
       (s.kota || '').toLowerCase().includes(q)
     );
   }, [schools, query]);
+
+  // Early return HARUS setelah semua hooks dipanggil (aturan React)
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
