@@ -170,6 +170,18 @@ function AppContent() {
   const handleSelectSchool = (school: SchoolEntry) => {
     setIsSchoolPickerOpen(false);
     applySchoolSelection(school);
+    promptLoginForSchool();
+  };
+
+  // Logout diam-diam (tanpa konfirmasi) + wajibkan login untuk sekolah yang dipilih
+  const forceLogout = () => {
+    setAuthSession({ isLoggedIn: false, user: null });
+  };
+
+  const promptLoginForSchool = () => {
+    forceLogout();
+    setIsLoginRequired(true);
+    setIsLoginModalOpen(true);
   };
 
   // Muat daftar sekolah saat aplikasi dibuka
@@ -195,6 +207,7 @@ function AppContent() {
           if (matched) {
             setSelectedSchoolId(matched.id);
             writeStoredSchoolId(matched.id);
+            promptLoginForSchool();
             return;
           }
           // ?api= tidak cocok dengan sekolah terdaftar -> lanjut ke pilihan tersimpan / picker
@@ -203,6 +216,7 @@ function AppContent() {
         const stored = storedId ? valid.find(s => s.id === storedId) : undefined;
         if (stored) {
           applySchoolSelection(stored, true);
+          promptLoginForSchool();
         } else {
           setIsSchoolPickerOpen(true);
         }
@@ -214,12 +228,13 @@ function AppContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
-  // Authentication State
+  // Authentication State (mulai dalam keadaan logout; login wajib tiap pilih sekolah)
   const [authSession, setAuthSession] = useState<AuthSession>({
-    isLoggedIn: true,
-    user: DEFAULT_USERS[0] // Default Administrator session for immediate ease of use
+    isLoggedIn: false,
+    user: null
   });
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isLoginRequired, setIsLoginRequired] = useState(false);
 
   // Navigation and Sidebar View State
   const [activeView, setActiveView] = useState<ActiveAppView>('dashboard');
@@ -968,6 +983,7 @@ function AppContent() {
       isLoggedIn: true,
       user
     });
+    setIsLoginRequired(false);
     addToast('success', 'Login Berhasil', `Selamat datang, ${user.nama} (${user.role})!`);
   };
 
@@ -1433,6 +1449,8 @@ function AppContent() {
         usersList={usersList}
         onLoginSuccess={handleLoginSuccess}
         authSession={authSession}
+        required={isLoginRequired}
+        schoolName={schoolList.find(s => s.id === selectedSchoolId)?.nama || ''}
       />
 
       {/* School Picker Modal (multi-sekolah, satu alamat) */}

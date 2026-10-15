@@ -24,6 +24,8 @@ interface LoginModalProps {
   usersList: PenggunaItem[];
   onLoginSuccess: (user: PenggunaItem) => void;
   authSession: AuthSession;
+  required?: boolean;
+  schoolName?: string;
 }
 
 export const LoginModal: React.FC<LoginModalProps> = ({
@@ -32,7 +34,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   apiUrl,
   usersList,
   onLoginSuccess,
-  authSession
+  authSession,
+  required = false,
+  schoolName = ''
 }) => {
   const { themeClasses, isLight } = useTheme();
   const [username, setUsername] = useState('');
@@ -141,16 +145,20 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             <div>
               <h3 className={`text-base font-bold ${themeClasses.textPrimary}`}>Login Pengguna</h3>
               <p className="text-xs text-slate-400">
-                Masuk ke sistem Bel Sekolah / Madrasah Digital
+                {required && schoolName
+                  ? `Masuk untuk mengakses ${schoolName}`
+                  : 'Masuk ke sistem Bel Sekolah / Madrasah Digital'}
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          {!required && (
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
         {/* Body */}
