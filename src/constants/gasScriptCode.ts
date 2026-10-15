@@ -335,7 +335,7 @@ function initializeAllSheets(ss) {
   }
 
   const results = {
-    pengaturan: !!getSchoolSettingsSheet(ss),
+    pengaturan: !!getPengaturanSheet(ss),
     jadwal: !!getJadwalBelSheet(ss),
     suara: !!getSuaraBelSheet(ss),
     hariAktif: !!getHariAktifSheet(ss),
