@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <script>
+      // Compatibility safeguard for environments/iframes where window.fetch has only a getter
+      (function() {
+        try {
+          var _origFetch = typeof window !== 'undefined' && window.fetch ? window.fetch.bind(window) : null;
+          Object.defineProperty(window, 'fetch', {
+            get: function() {
+              return _origFetch;
+            },
+            set: function(newFetch) {
+              _origFetch = newFetch;
+            },
+            configurable: true,
+            enumerable: true
+          });
+        } catch (e) {
+          // Ignore if property definition fails silently
+        }
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bel Sekolah/Madrasah Digital</title>
+    <meta name="description" content="Aplikasi Bel Sekolah/Madrasah Digital berbasis Google Spreadsheet dan Google Apps Script API dengan konfigurasi identitas sekolah dan dashboard realtime." />
+    <meta property="og:title" content="Bel Sekolah/Madrasah Digital" />
+    <meta property="og:description" content="Aplikasi Bel Sekolah/Madrasah Digital berbasis Google Spreadsheet dan Google Apps Script API dengan konfigurasi identitas sekolah dan dashboard realtime." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  </head>
+  <body class="bg-slate-900 text-slate-100 antialiased selection:bg-emerald-500 selection:text-white min-h-screen">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

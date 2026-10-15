@@ -1,0 +1,6 @@
+{
+  "name": "Bel Sekolah/Madrasah Digital",
+  "description": "Aplikasi Bel Sekolah/Madrasah Digital berbasis Google Spreadsheet dan Google Apps Script API dengan konfigurasi identitas sekolah dan dashboard realtime.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
