@@ -195,8 +195,9 @@ function AppContent() {
           if (matched) {
             setSelectedSchoolId(matched.id);
             writeStoredSchoolId(matched.id);
+            return;
           }
-          return;
+          // ?api= tidak cocok dengan sekolah terdaftar -> lanjut ke pilihan tersimpan / picker
         }
         const storedId = readStoredSchoolId();
         const stored = storedId ? valid.find(s => s.id === storedId) : undefined;
