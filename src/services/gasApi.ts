@@ -714,10 +714,22 @@ export async function loginUserViaGAS(apiUrl: string, username: string, password
       body: JSON.stringify(payload)
     });
     const result = await response.json();
+    // Backend mengembalikan user di level atas (result.user); dukung juga format lama (result.data.user)
+    const rawUser = (result as any).user || result.data?.user;
+    const user = rawUser ? {
+      id: rawUser.id || '',
+      username: rawUser.username || '',
+      nama: rawUser.nama || rawUser.namaLengkap || rawUser.username || '',
+      namaLengkap: rawUser.namaLengkap || rawUser.nama || '',
+      role: rawUser.role === 'Admin' ? 'Admin' : 'Operator',
+      status: rawUser.status || (rawUser.statusAktif ? 'Aktif' : 'Nonaktif'),
+      statusAktif: typeof rawUser.statusAktif === 'boolean' ? rawUser.statusAktif : rawUser.status === 'Aktif',
+      terakhirLogin: rawUser.terakhirLogin || ''
+    } as PenggunaItem : undefined;
     return {
       success: result.success !== false,
       message: result.message || (result.success ? 'Login berhasil!' : 'Login gagal.'),
-      user: result.data?.user,
+      user,
       error: result.error
     };
   } catch (err: any) {

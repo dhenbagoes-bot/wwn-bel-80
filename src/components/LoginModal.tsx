@@ -126,12 +126,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     }
   };
 
-  const fillQuickCredential = (u: string, p: string) => {
-    setUsername(u);
-    setPassword(p);
-    setErrorMsg(null);
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
       <div className={`border rounded-2xl w-full max-w-md overflow-hidden shadow-2xl ${themeClasses.cardBg}`}>
@@ -221,31 +215,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-200"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-
-          {/* Quick Credential Helper Buttons */}
-          <div className={`p-3 rounded-xl border text-xs ${themeClasses.cardSubtleBg} ${themeClasses.border}`}>
-            <p className="text-[11px] font-semibold text-slate-400 mb-2">
-              Akun Bawaan Sheet Pengguna:
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => fillQuickCredential('admin', '123')}
-                className="px-2.5 py-1.5 rounded-lg bg-purple-950/60 hover:bg-purple-900/60 border border-purple-800/50 text-purple-300 text-[11px] font-bold text-left transition-all"
-              >
-                👑 <strong>admin</strong> (Akses Penuh)
-                <span className="block text-[10px] text-purple-400/80 font-normal">pass: 123</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => fillQuickCredential('operator', '123')}
-                className="px-2.5 py-1.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-800/50 text-emerald-300 text-[11px] font-bold text-left transition-all"
-              >
-                🎧 <strong>operator</strong> (Harian)
-                <span className="block text-[10px] text-emerald-400/80 font-normal">pass: 123</span>
               </button>
             </div>
           </div>
