@@ -144,6 +144,33 @@ function AppContent() {
     }
   };
 
+  // Cache daftar pengguna per backend agar login tetap bisa saat offline
+  const USERS_CACHE_KEY = 'wwn-bel-80:users-cache';
+  const userCacheKeyForApi = (url: string): string => `api:${url}`;
+
+  const readCachedUsers = (apiUrl: string): PenggunaItem[] | null => {
+    try {
+      const raw = window.localStorage.getItem(USERS_CACHE_KEY);
+      if (!raw) return null;
+      const entry = JSON.parse(raw)[userCacheKeyForApi(apiUrl)];
+      if (entry && Array.isArray(entry.users) && entry.users.length > 0) return entry.users as PenggunaItem[];
+    } catch {
+      /* abaikan */
+    }
+    return null;
+  };
+
+  const writeCachedUsers = (apiUrl: string, users: PenggunaItem[]) => {
+    try {
+      const raw = window.localStorage.getItem(USERS_CACHE_KEY);
+      const map = raw ? JSON.parse(raw) : {};
+      map[userCacheKeyForApi(apiUrl)] = { users, savedAt: Date.now() };
+      window.localStorage.setItem(USERS_CACHE_KEY, JSON.stringify(map));
+    } catch {
+      /* abaikan jika penyimpanan tidak tersedia */
+    }
+  };
+
   const writeStoredSchoolId = (id: string | null) => {
     try {
       if (id) window.localStorage.setItem(SCHOOL_STORAGE_KEY, id);
@@ -156,10 +183,22 @@ function AppContent() {
   const applySchoolSelection = (school: SchoolEntry, silent: boolean = false) => {
     setSelectedSchoolId(school.id);
     writeStoredSchoolId(school.id);
+    // Reset data ke bawaan agar tidak tampil data sekolah sebelumnya (stale)
+    setConfig(DEFAULT_SCHOOL_CONFIG);
+    setJadwalList(DEFAULT_SAMPLE_SCHEDULES);
+    setSuaraList(DEFAULT_SAMPLE_SOUNDS);
+    setHariAktifList(DEFAULT_HARI_AKTIF);
+    setHariLiburList(DEFAULT_HARI_LIBUR);
+    setRiwayatList([]);
+    // Muat cache pengguna sekolah ini agar login offline tetap bisa
+    const cachedUsers = readCachedUsers(school.apiUrl);
+    setUsersList(cachedUsers || DEFAULT_USERS);
     setApiUrl(school.apiUrl);
     if (typeof window !== 'undefined' && window.history) {
       const url = new URL(window.location.href);
-      url.searchParams.set('api', school.apiUrl);
+      url.searchParams.delete('api');
+      url.searchParams.delete('gas');
+      url.searchParams.set('school', school.id);
       window.history.replaceState({}, '', url.toString());
     }
     if (!silent) {
@@ -199,14 +238,22 @@ function AppContent() {
         if (valid.length === 0) return;
         setSchoolList(valid);
 
-        // Prioritas: parameter ?api= > sekolah tersimpan > tampilkan pilihan
+        // Prioritas: parameter ?school= > ?api= > sekolah tersimpan > tampilkan pilihan
         const params = new URLSearchParams(window.location.search);
+        const schoolParam = params.get('school');
+        if (schoolParam) {
+          const matchedSchool = valid.find(s => s.id === schoolParam);
+          if (matchedSchool) {
+            applySchoolSelection(matchedSchool, true);
+            promptLoginForSchool();
+            return;
+          }
+        }
         const urlParam = params.get('api') || params.get('gas');
         if (urlParam) {
           const matched = valid.find(s => s.apiUrl === decodeURIComponent(urlParam));
           if (matched) {
-            setSelectedSchoolId(matched.id);
-            writeStoredSchoolId(matched.id);
+            applySchoolSelection(matched, true);
             promptLoginForSchool();
             return;
           }
@@ -548,7 +595,10 @@ function AppContent() {
         if (res.hariAktif && Array.isArray(res.hariAktif)) setHariAktifList(res.hariAktif);
         if (res.hariLibur && Array.isArray(res.hariLibur)) setHariLiburList(res.hariLibur);
         if (res.riwayat && Array.isArray(res.riwayat)) setRiwayatList(res.riwayat);
-        if (res.pengguna && Array.isArray(res.pengguna)) setUsersList(res.pengguna);
+        if (res.pengguna && Array.isArray(res.pengguna)) {
+          setUsersList(res.pengguna);
+          writeCachedUsers(activeUrl, res.pengguna);
+        }
         if (res.database) {
           setDbStatus(res.database);
         } else {
@@ -605,9 +655,22 @@ function AppContent() {
       setSelectedSchoolId(null);
       writeStoredSchoolId(null);
     }
+    // Reset agar tidak tampil data koneksi sebelumnya
+    setConfig(DEFAULT_SCHOOL_CONFIG);
+    setJadwalList(DEFAULT_SAMPLE_SCHEDULES);
+    setSuaraList(DEFAULT_SAMPLE_SOUNDS);
+    setHariAktifList(DEFAULT_HARI_AKTIF);
+    setHariLiburList(DEFAULT_HARI_LIBUR);
+    setRiwayatList([]);
+    const cachedUsers = readCachedUsers(cleanUrl);
+    setUsersList(cachedUsers || DEFAULT_USERS);
     if (typeof window !== 'undefined' && window.history) {
       const url = new URL(window.location.href);
-      url.searchParams.set('api', cleanUrl);
+      url.searchParams.delete('api');
+      url.searchParams.delete('gas');
+      url.searchParams.delete('school');
+      if (matched) url.searchParams.set('school', matched.id);
+      else url.searchParams.set('api', cleanUrl);
       window.history.replaceState({}, '', url.toString());
     }
     syncDataFromSpreadsheet(cleanUrl);
@@ -648,8 +711,14 @@ function AppContent() {
         setApiUrl(newApiUrl);
         if (typeof window !== 'undefined' && window.history) {
           const url = new URL(window.location.href);
-          if (newApiUrl) url.searchParams.set('api', newApiUrl);
-          else url.searchParams.delete('api');
+          url.searchParams.delete('api');
+          url.searchParams.delete('gas');
+          url.searchParams.delete('school');
+          if (newApiUrl) {
+            const matchedSchool = schoolList.find(s => s.apiUrl === newApiUrl.trim());
+            if (matchedSchool) url.searchParams.set('school', matchedSchool.id);
+            else url.searchParams.set('api', newApiUrl);
+          }
           window.history.replaceState({}, '', url.toString());
         }
         // Jika URL manual tidak cocok dengan sekolah terpilih, lepas pilihan sekolah
@@ -993,14 +1062,23 @@ function AppContent() {
         isLoggedIn: false,
         user: null
       });
-      addToast('info', 'Telah Keluar', 'Sesi login telah ditutup.');
+      // Langsung kunci dengan form login agar jelas sudah keluar
+      setIsLoginRequired(true);
+      setIsLoginModalOpen(true);
+      addToast('info', 'Telah Keluar', 'Sesi login telah ditutup. Silakan masuk kembali.');
     }
   };
 
   const handleCopyDeviceLink = () => {
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
-      if (apiUrl) {
+      url.searchParams.delete('api');
+      url.searchParams.delete('gas');
+      url.searchParams.delete('school');
+      const schoolForLink = schoolList.find(s => s.id === selectedSchoolId && s.apiUrl === apiUrl);
+      if (schoolForLink) {
+        url.searchParams.set('school', schoolForLink.id);
+      } else if (apiUrl) {
         url.searchParams.set('api', apiUrl);
       }
       navigator.clipboard.writeText(url.toString());
@@ -1325,13 +1403,31 @@ function AppContent() {
           {/* ========================================================================= */}
           {activeView === 'pengguna' && (
             <div className="animate-fade-in">
-              <UserManagementView
-                usersList={usersList}
-                onSaveUsers={handleSaveUsers}
-                isSaving={isSaving}
-                authSession={authSession}
-                onRefresh={() => syncDataFromSpreadsheet()}
-              />
+              {authSession.isLoggedIn && authSession.user?.role === 'Admin' ? (
+                <UserManagementView
+                  usersList={usersList}
+                  onSaveUsers={handleSaveUsers}
+                  isSaving={isSaving}
+                  authSession={authSession}
+                  onRefresh={() => syncDataFromSpreadsheet()}
+                />
+              ) : (
+                <div className={`rounded-2xl border p-10 text-center max-w-md mx-auto ${themeClasses.cardBg} ${themeClasses.border}`}>
+                  <div className="mx-auto w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mb-4">
+                    <ShieldCheck className="w-7 h-7 text-amber-400" />
+                  </div>
+                  <h3 className={`text-base font-bold mb-2 ${themeClasses.textPrimary}`}>Akses Terkunci</h3>
+                  <p className="text-xs text-slate-400 mb-5">
+                    Daftar pengguna (username, nama, dan peran) hanya dapat dilihat oleh Administrator yang sudah login.
+                  </p>
+                  <button
+                    onClick={() => { setIsLoginRequired(false); setIsLoginModalOpen(true); }}
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-sm font-bold transition-all shadow-lg shadow-emerald-950/60"
+                  >
+                    Login sebagai Admin
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

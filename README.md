@@ -121,7 +121,7 @@ Format `public/schools.json`:
 * `kota`: opsional, tampil sebagai keterangan.
 * `apiUrl`: URL Web App (`/exec`) milik sekolah tersebut.
 
-**Menambah sekolah baru:** edit `public/schools.json`, commit, push — Vercel otomatis deploy ulang. Prioritas koneksi: parameter URL `?api=` → sekolah yang terakhir dipilih (tersimpan di browser) → daftar pilih sekolah → konfigurasi manual.
+**Menambah sekolah baru:** edit `public/schools.json`, commit, push — Vercel otomatis deploy ulang. Prioritas koneksi: parameter URL `?school=` (atau `?api=` manual) → sekolah yang terakhir dipilih (tersimpan di browser) → daftar pilih sekolah → konfigurasi manual. Untuk sekolah terdaftar, aplikasi memakai `?school=<id>` agar URL Apps Script tidak terlihat di address bar.
 
 ---
 
@@ -129,12 +129,12 @@ Format `public/schools.json`:
 
 * **Administrator Utama:**
   * Username: `admin`
-  * Password: `123`
+  * Password: `admin123`
   * Role: `Admin` (Akses Penuh)
 
 * **Operator Bel:**
   * Username: `operator`
-  * Password: `123`
+  * Password: `operator123`
   * Role: `Operator` (Operasional Harian)
 
 *Kata sandi dapat diubah langsung melalui menu Manajemen Pengguna atau sheet `Pengguna`.*

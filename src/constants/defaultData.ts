@@ -66,8 +66,8 @@ export const DEFAULT_HARI_LIBUR: HariLiburItem[] = [
 ];
 
 export const DEFAULT_USERS: PenggunaItem[] = [
-  { id: 'USR-001', username: 'admin', password: '123', nama: 'Administrator Utama', role: 'Admin', status: 'Aktif' },
-  { id: 'USR-002', username: 'operator', password: '123', nama: 'Operator Bel Sekolah', role: 'Operator', status: 'Aktif' }
+  { id: 'USR-001', username: 'admin', password: 'admin123', nama: 'Administrator Utama', role: 'Admin', status: 'Aktif' },
+  { id: 'USR-002', username: 'operator', password: 'operator123', nama: 'Operator Bel Sekolah', role: 'Operator', status: 'Aktif' }
 ];
 
 export const TIPE_BEL_OPTIONS: { value: BellType; label: string; badgeColor: string }[] = [

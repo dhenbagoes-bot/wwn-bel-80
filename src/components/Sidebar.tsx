@@ -143,6 +143,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   const handleSelectNav = (view: ActiveAppView) => {
+    const item = navItems.find(n => n.id === view);
+    if (item?.adminOnly && !isAdmin) {
+      // Alihkan ke form login alih-alih halaman terkunci
+      onClose();
+      onOpenLogin();
+      return;
+    }
     setActiveView(view);
     onClose();
   };
