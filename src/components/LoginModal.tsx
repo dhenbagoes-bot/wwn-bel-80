@@ -96,7 +96,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         return;
       }
 
-      if (matchedUser.status !== 'Aktif') {
+      // Dukung dua format status: 'Aktif' (lokal) dan statusAktif boolean (dari cloud)
+      const isActiveUser = matchedUser.status === 'Aktif' || (matchedUser as any).statusAktif === true;
+      if (!isActiveUser) {
         setErrorMsg(`Akun "${username}" saat ini Nonaktif. Silakan hubungi Administrator.`);
         setIsLoading(false);
         return;
